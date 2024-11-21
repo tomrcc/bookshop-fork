@@ -4,6 +4,7 @@ import {
   findDefinition,
   addParentLinks,
   createFinder,
+  isLiteralLike
 } from "../helpers/ast-helper.js";
 
 const findComponents = createFinder(
@@ -79,10 +80,20 @@ export default (src, componentName, includeErrorBoundaries, removeClientDirectiv
       .filter((prop) => prop.key?.value !== "class")
       .map((prop) => {
         if (prop.type === "SpreadElement") {
-          const identifier = (generate.default ?? generate)(prop.argument).code;
+          if (isLiteralLike(prop.argument)) {
+            return `{key:"bind", identifiers: [], values: []}`;
+          }
+          const identifier = (generate.default ?? generate)(prop.argument, {
+            comments: false,
+          }).code;
           return `{key:"bind", identifiers: ["${identifier}"], values: [${identifier}]}`;
-        } else if (prop.value.type.endsWith("Literal")) {
-          const value = (generate.default ?? generate)(prop.value).code;
+        } else if (isLiteralLike(prop.value)) {
+          if (!prop.value.type.endsWith("Literal")) {
+            return `{key:"${prop.key.name}", identifiers: [], values: []}`;
+          }
+          const value = (generate.default ?? generate)(prop.value, {
+            comments: false,
+          }).code;
           return `{key:"${prop.key.value}", values: [${value}]}`;
         } else {
           let identifiers = [];
@@ -91,7 +102,9 @@ export default (src, componentName, includeErrorBoundaries, removeClientDirectiv
           while (true) {
             let currIdentifier;
             while (true) {
-              currIdentifier = (generate.default ?? generate)(curr).code;
+              currIdentifier = currIdentifier = (generate.default ?? generate)(curr, {
+                comments: false,
+              }).code;
               identifiers.push(currIdentifier);
               if (!curr.object) {
                 break;
@@ -107,7 +120,9 @@ export default (src, componentName, includeErrorBoundaries, removeClientDirectiv
             identifiers = identifiers.map((identifier) => {
               return identifier.replace(
                 currIdentifier,
-                (generate.default ?? generate)(curr).code
+                currIdentifier = (generate.default ?? generate)(curr, {
+                  comments: false,
+                }).code
               );
             });
           }
@@ -163,7 +178,7 @@ export default (src, componentName, includeErrorBoundaries, removeClientDirectiv
           return {key, path};
         }
 
-        if(identifiers[0].startsWith('Astro2.props.frontmatter.')){
+        if(identifiers[0] && identifiers[0].startsWith('Astro2.props.frontmatter.')){
           return {key, path: identifiers[0].replace('Astro2.props.frontmatter.', '')};
         }
       }).filter((item) => !!item);

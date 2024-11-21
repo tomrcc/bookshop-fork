@@ -5,6 +5,7 @@ import {
   addParentLinks,
   findSpreadExpressions,
   createFinder,
+  isLiteralLike
 } from "../helpers/ast-helper.js";
 
 const dataBindingKeys = [
@@ -320,14 +321,26 @@ export default (src, componentName, includeErrorBoundaries) => {
           prop.type === "SpreadElement" ||
           prop.type === "JSXSpreadAttribute"
         ) {
-          const identifier = (generate.default ?? generate)(prop.argument).code;
+          if (isLiteralLike(prop.argument)) {
+            return `{key:"bind", identifiers: [], values: []}`;  
+          }
+          const identifier = (generate.default ?? generate)(prop.argument, {
+            comments: false,
+          }).code;
           return `{key:"bind", identifiers: ["${identifier}"], values: [${identifier}]}`;
-        } else if (prop.value.type.endsWith("Literal")) {
-          const value = (generate.default ?? generate)(prop.value).code;
+        } else if (isLiteralLike(prop.value)) {
+          if (!prop.value.type.endsWith("Literal")) {
+            return `{key:"${prop.key.name}", identifiers: [], values: []}`;
+          }
+          const value = (generate.default ?? generate)(prop.value, {
+            comments: false,
+          }).code;
           return `{key:"${prop.key.name}", values: [${value}]}`;
         } else if (prop.value.expression?.type.endsWith("Literal")) {
           const value = (generate.default ?? generate)(
-            prop.value.expression
+            prop.value.expression, {
+              comments: false,
+            }
           ).code;
           return `{key:"${prop.name.name}", values: [${value}]}`;
         } else {
@@ -340,7 +353,9 @@ export default (src, componentName, includeErrorBoundaries) => {
           ) {
             let currIdentifier;
             while (true) {
-              currIdentifier = (generate.default ?? generate)(curr).code;
+              currIdentifier = (generate.default ?? generate)(curr, {
+                comments: false,
+              }).code;
               identifiers.push(currIdentifier);
               if (!curr.object) {
                 break;
@@ -356,7 +371,9 @@ export default (src, componentName, includeErrorBoundaries) => {
             identifiers = identifiers.map((identifier) => {
               return identifier.replace(
                 currIdentifier,
-                (generate.default ?? generate)(curr).code
+                (generate.default ?? generate)(curr, {
+                  comments: false,
+                }).code
               );
             });
           }

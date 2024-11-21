@@ -145,3 +145,11 @@ export const findSpreadExpressions = createFinder(
   ({ type }) => type === "SpreadElement" || type === "JSXSpreadAttribute",
   false
 );
+
+
+export const isLiteralLike = (node) =>
+  node.type.endsWith("Literal") ||
+  node.type === "ObjectExpression" ||
+  node.type === "ArrayExpression" ||
+  node.type === "CallExpression" ||
+  node.type === "ConditionalExpression";
