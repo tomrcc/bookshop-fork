@@ -444,7 +444,7 @@ export default (src, componentName, includeErrorBoundaries) => {
             return {key, path};
           }
 
-          if(identifiers[0].startsWith('Astro2.props.frontmatter.')){
+          if(identifiers[0] && identifiers[0].startsWith('Astro2.props.frontmatter.')){
             return {key, path: identifiers[0].replace('Astro2.props.frontmatter.', '')};
           }
         }).filter((item) => !!item);
