@@ -228,7 +228,7 @@ export default (src, componentName, includeErrorBoundaries, removeClientDirectiv
     Object.keys(template).forEach((key) => (node[key] = template[key]));
   });
 
-  if(includeErrorBoundaries){
+  if(includeErrorBoundaries) {
     findComponentsDefs(tree).forEach((node) => {
       const handler = parse(`() => {
         try{
@@ -241,7 +241,7 @@ export default (src, componentName, includeErrorBoundaries, removeClientDirectiv
           </div>\`;
         }
       };`).program.body[0].expression.body.body;
-      handler[0].block.body = node.arguments[0].body.body
+      handler[0].block.body = node.arguments[0].body.body;
       node.arguments[0].body.body = handler;
     });
   }
